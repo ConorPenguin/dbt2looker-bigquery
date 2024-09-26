@@ -1,6 +1,5 @@
 import lkml
 from . import models
-from rich import print
 import logging
 
 class NotImplementedError(Exception):
@@ -97,6 +96,7 @@ def map_adapter_type_to_looker(adapter_type: models.SupportedDbtAdapters, column
         column_type = column_type.split('<')[0]
 
     looker_type = LOOKER_DTYPE_MAP[adapter_type].get(column_type)
+
     if (column_type is not None) and (looker_type is None):
         logging.warning(f'Column type {column_type} not supported for conversion from {adapter_type} to looker. No dimension will be created.')
     return looker_type
@@ -406,7 +406,7 @@ def extract_array_models(columns: list[models.DbtModelColumn])->list[models.DbtM
 
     # Initialize parent_list with all columns that are arrays
     for column in columns:
-        if column.data_type is not None:
+        if column.data_type:
             if 'ARRAY' == column.data_type:
                 array_list.append(column)
     return array_list
@@ -432,7 +432,7 @@ def group_strings(all_columns:list[models.DbtModelColumn], array_columns:list[mo
         for column in all_columns:
             # singleton array handling
             if column.name == parent.name:
-                if column.inner_types is not None:
+                if column.inner_types:
                     if len(column.inner_types) == 1:
                         logging.debug(f"column {column.name} is a array child of {parent.name}")
                         structure['children'].append({column.name : {'column' : column, 'children' : []}})
@@ -471,13 +471,12 @@ def lookml_view_from_dbt_model(model: models.DbtModel, adapter_type: models.Supp
     '''
     array_models = extract_array_models(model.columns.values())
     structure = group_strings(model.columns.values(), array_models)
-    lookml = {}
     lookml_list = []
 
     view_label = None
     # Add 'label' only if it exists
     if hasattr(model.meta.looker, 'label'):
-        if model.meta.looker.label is not None:
+        if model.meta.looker.label:
             view_label = model.meta.looker.label
         elif hasattr(model, 'name'):
             view_label = model.name.replace("_", " ").title()
@@ -519,8 +518,9 @@ def lookml_view_from_dbt_model(model: models.DbtModel, adapter_type: models.Supp
     used_names = []
     if structure:
         view_list, used_names = recurse_views(structure, 1)
-        logging.debug(view_list)
+        # logging.debug(view_list)
         lookml_list.append(view_list)
+
 
     lookml_view = [
         {

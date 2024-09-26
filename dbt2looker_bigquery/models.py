@@ -166,7 +166,7 @@ class DbtModelColumn(BaseModel):
     lookml_name: str
     description: Optional[str]
     data_type: Optional[str]
-    inner_types: Optional[list[str]]
+    inner_types: Optional[list[str]] = []
     meta: Optional[DbtModelColumnMeta] = DbtModelColumnMeta()
     nested: Optional[bool] = False
 
@@ -174,6 +174,7 @@ class DbtModelColumn(BaseModel):
     @root_validator(pre=True)
     def set_nested_and_parent_name(cls, values):
         name = values.get('name', '')
+        # logging.debug(f"{name}")
 
         # If there's a dot in the name, it's a nested field
         if '.' in name:

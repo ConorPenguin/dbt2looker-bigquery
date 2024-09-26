@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, Optional, List
 from . import models as models
-from rich import print
 
 def parse_catalog_nodes(raw_catalog: dict):
     catalog = models.DbtCatalog(**raw_catalog)
@@ -28,9 +27,11 @@ def parse_models(raw_manifest: dict, tag=None, exposures_only=False, select_mode
         if node.resource_type == 'model':
             logging.debug('Found model %s', node)
 
+
     all_models: List[models.DbtModel] = [
         node
         for node in manifest.nodes.values()
+        # if node.resource_type == 'model'
         if node.resource_type == 'model' and hasattr(node, 'name')
     ]
 
@@ -70,6 +71,7 @@ def check_models_for_missing_column_types(dbt_typed_models: List[models.DbtModel
 def check_model_materialization(dbt_models: List[models.DbtModel], catalog_nodes : dict, adapter_type: str):
     logging.debug('Found manifest entries for %d models', len(dbt_models))
     for model in dbt_models:
+        logging.debug(f'{model.columns.values()}')
         logging.debug(
             'Model %s has %d columns with %d measures',
             model.name,
